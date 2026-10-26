@@ -1,0 +1,104 @@
+# In the first code cell, run below to check python version 
+import sys
+print(sys.version)
+
+# Step 2 - Define a Simple Block
+import hashlib
+import time
+
+class Block:
+    def __init__(self, index, previous_hash, timestamp, data, nonce=0):
+        self.index = index
+        self.previous_hash = previous_hash
+        self.timestamp = timestamp
+        self.data = data
+        self.nonce = nonce
+        self.hash = self.calculate_hash()
+
+    def calculate_hash(self):
+        block_string = (
+            str(self.index) +
+            str(self.previous_hash) +
+            str(self.timestamp) +
+            str(self.data) +
+            str(self.nonce)
+        )
+        return hashlib.sha256(block_string.encode()).hexdigest()
+
+# Step 3 – Create the Blockchain Container
+class Blockchain:
+    def __init__(self, difficulty=4):
+        self.chain = [self.create_genesis_block()]
+        self.difficulty = difficulty  # number of leading zeros required in hash
+
+    def create_genesis_block(self):
+        return Block(0, "0", time.time(), "Genesis Block")
+
+    def get_latest_block(self):
+        return self.chain[-1]
+
+    def add_block(self, new_block):
+        new_block.previous_hash = self.get_latest_block().hash
+        new_block.hash = new_block.calculate_hash()
+        self.mine_block(new_block)
+        self.chain.append(new_block)
+
+    def mine_block(self, block):
+        target = "0" * self.difficulty
+        while not block.hash.startswith(target):
+            block.nonce += 1
+            block.hash = block.calculate_hash()
+        print(f"Block mined: {block.hash} (nonce: {block.nonce})")
+
+    def is_chain_valid(self):
+        for i in range(1, len(self.chain)):
+            current_block = self.chain[i]
+            previous_block = self.chain[i - 1]
+
+            # Check current hash
+            if current_block.hash != current_block.calculate_hash():
+                print("Current hash is invalid at block", i)
+                return False
+
+            # Check previous hash link
+            if current_block.previous_hash != previous_block.hash:
+                print("Previous hash is invalid at block", i)
+                return False
+
+        return True
+# Step 4 – Test the Blockchain
+my_chain = Blockchain(difficulty=4)
+
+print("Mining block 1...")
+my_chain.add_block(Block(1, "", time.time(), "Alice pays Bob 5 BTC"))
+
+print("Mining block 2...")
+my_chain.add_block(Block(2, "", time.time(), "Bob pays Carol 2 BTC"))
+
+print("\nIs blockchain valid?", my_chain.is_chain_valid())
+
+print("\nBlockchain contents:")
+for block in my_chain.chain:
+    print("---------------------------")
+    print("Index:", block.index)
+    print("Timestamp:", block.timestamp)
+    print("Data:", block.data)
+    print("Nonce:", block.nonce)
+    print("Hash:", block.hash)
+    print("Previous Hash:", block.previous_hash)
+
+# Step 5 – Simulate a Tampering Attack
+my_chain = Blockchain(difficulty=5)
+print("\nAttempting to tamper with the blockchain...")
+my_chain.chain[1].data = "Alice pays Bob 500 BTC (tampered)"
+my_chain.chain[1].hash = my_chain.chain[1].calculate_hash()
+
+print("Is blockchain valid after tampering?", my_chain.is_chain_valid())
+
+# Step 5 - Validate the invalid block 
+print("\nRe-mining from tampered block onward...")
+for i in range(1, len(my_chain.chain)):
+    block = my_chain.chain[i]
+    my_chain.mine_block(block)
+
+print("Is blockchain valid now?", my_chain.is_chain_valid())

@@ -87,7 +87,7 @@ for block in my_chain.chain:
     print("Hash:", block.hash)
     print("Previous Hash:", block.previous_hash)
 
-# Step 5 – Simulate a Tampering Attack
+# Step 5 – Simulate a Tampering Attack [ New Code Block] 
 my_chain = Blockchain(difficulty=5)
 print("\nAttempting to tamper with the blockchain...")
 my_chain.chain[1].data = "Alice pays Bob 500 BTC (tampered)"
